@@ -25,7 +25,6 @@ export async function threadShow(ctx, id) {
     if (ctx.before) query.before = ctx.before;
     if (ctx.runId) query.run_id = ctx.runId;
     messagesData = await apiRequest(ctx, `threads/${id}/messages`, { query });
-    console.log('\n\n====== messagesData', messagesData, '\n\n');
   } catch (e) {
     if (ctx.debug) console.error('[WARN] Failed to fetch messages:', e.message);
   }
