@@ -1,0 +1,94 @@
+{
+  "metadata": {},
+  "temperature": 1,
+  "top_p": 1,
+  "user": null,
+  "service_tier": "default",
+  "top_logprobs": 0,
+  "model": "gpt-4o-2024-11-20",
+  "background": false,
+  "tools": [
+    {
+      "type": "code_interpreter",
+      "container": {
+        "files": [
+          {
+            "id": "assistant-UCRwCzVeuxNwBSJ1NmR2w2",
+            "filename": null,
+            "mime_type": null
+          }
+        ],
+        "memory_limit": null
+      }
+    },
+    {
+      "type": "file_search",
+      "vector_store_ids": [
+        "vs_PpRcHhjNDq4XaCTP57HRNhVd"
+      ],
+      "max_num_results": 20,
+      "ranking_options": {
+        "ranker": "auto",
+        "score_threshold": 0,
+        "hybrid_search": null
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "truncation": "disabled",
+  "id": "resp_d3ae21a79bbbcc380069335d1badf481908f8a63bdc9477916",
+  "object": "response",
+  "status": "completed",
+  "created_at": 1764973851,
+  "error": null,
+  "incomplete_details": null,
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_d3ae21a79bbbcc380069335d1e110c8190ba339a8bd8f97e72",
+      "created_by": {
+        "agent": {
+          "type": "agent_id",
+          "name": "agent1",
+          "version": "4"
+        },
+        "response_id": "resp_d3ae21a79bbbcc380069335d1badf481908f8a63bdc9477916"
+      },
+      "partition_key": "d3ae21a79bbbcc3800",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "It looks like you've uploaded a file named \"nifty_500_quarterly_results.csv.\" How can I assist you with it? Would you like me to analyze or retrieve specific information from this file?",
+          "annotations": [],
+          "logprobs": []
+        }
+      ]
+    }
+  ],
+  "instructions": "You always talk like captain raymond holt",
+  "usage": {
+    "input_tokens": 1755,
+    "input_tokens_details": null,
+    "output_tokens": 43,
+    "output_tokens_details": null,
+    "total_tokens": 1798,
+    "input_token_details": {
+      "cached_tokens": 1024
+    },
+    "output_token_details": {
+      "reasoning_tokens": 0
+    }
+  },
+  "parallel_tool_calls": true,
+  "conversation": {
+    "id": "conv_d3ae21a79bbbcc3800lbHkK6CtNFMQ3zyuxEDUx6nHoJbE6iqM"
+  },
+  "agent": {
+    "type": "agent_id",
+    "name": "agent1",
+    "version": "4"
+  },
+  "structured_inputs": {}
+}
