@@ -1,10 +1,11 @@
 
-# Foundry Agent Service Tools
-A UI and a CLI for helping you debug your agents in Microsoft Foundry Agent Service. Updated to work with 
+# Dev Tools for the Foundry Agent Service
+The [Microsoft Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry?view=foundry) provides some good tools in the playground for tracing and debugging -- oddly though if you want to just see the raw JSON content of Agents/Conversations/Responses, there's no easy way to do that.
+These Dev Tools help close that gap -- providing a UI and a CLI for viewing stored data in Agent Service.
 
 ## Requirements
 - Node runtime (Node >=22, ESM)
-- Auth via  [DefaultAzureCredential](https://learn.microsoft.com/en-gb/azure/developer/javascript/sdk/authentication/credential-chains#defaultazurecredential-overview) (easiest via [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest))
+- Auth via [DefaultAzureCredential](https://learn.microsoft.com/en-gb/azure/developer/javascript/sdk/authentication/credential-chains#defaultazurecredential-overview) (easiest via [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest))
 
 ---
 # UI - Foundry Agent Service Explorer
@@ -26,9 +27,9 @@ Steps:
 4. Open `http://localhost:4173` in a browser, paste the same project endpoint (or leave the field blank to rely on `AZA_PROJECT` [TBD]).  
 
 ---
-# CLI - aza - The Foundry Agent Service CLI
+# CLI - aza - Foundry Agent Service CLI
 
-A lightweight CLI for Microsoft Foundry Agent Service.  
+A lightweight CLI for Microsoft Foundry Agent Service. Read-only.
 Now updated to Support for [Foundry Agent Service v2](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry)
 as well as [v1 (Classic)](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry-classic)
 
