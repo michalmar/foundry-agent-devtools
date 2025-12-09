@@ -8,6 +8,7 @@ function getAgentTools(agent) {
 }
 
 export function AgentCard({ agent }) {
+  const createdAt = agent?.versions?.latest?.created_at || agent?.created_at || null;
   return (
     <article className="bg-white rounded-xl border border-gray-200 p-4 shadow-md hover:shadow-lg transition-shadow">
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{agent.id || 'Unknown id'}</p>
@@ -15,11 +16,11 @@ export function AgentCard({ agent }) {
       <div className="space-y-2 text-sm">
         <div>
           <p className="text-xs uppercase tracking-wider text-gray-500">Model</p>
-          <p className="text-gray-900">{agent.model || '—'}</p>
+          <p className="text-gray-900">{agent.versions?.latest?.definition?.model || agent.model || '—'}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider text-gray-500">Created</p>
-          <p className="text-gray-900">{formatDate(agent.created)}</p>
+          <p className="text-gray-900">{formatDate(createdAt * 1000)}</p>
         </div>
       </div>
     </article>

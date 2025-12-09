@@ -12,7 +12,7 @@ export function ConversationCard({ conversation }) {
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider text-gray-500">Created</p>
-          <p className="text-gray-900">{formatDate(conversation.created)}</p>
+          <p className="text-gray-900">{formatDate(conversation.created_at * 1000)}</p>
         </div>
       </div>
     </article>
@@ -83,7 +83,7 @@ export function ConversationsTable({ conversations, selectedConversation, onSele
               }`}
             >
               <td className="px-4 py-3 text-sm text-gray-900">{conversation.id || '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-700">{formatDate(conversation.created)}</td>
+              <td className="px-4 py-3 text-sm text-gray-700">{formatDate(conversation.created_at * 1000)}</td>
             </tr>
           ))}
         </tbody>

@@ -68,7 +68,8 @@ async function handleAgentsRequest(url, res) {
     const endpoint = ctx.agentsV1 ? 'assistants' : 'agents';
     const query = ctx.agentsV1 ? buildLegacyQuery(ctx) : buildV2Query(ctx);
     const payload = await apiRequest(ctx, endpoint, { query });
-    const agents = normalizeAgents(payload, ctx.agentsV1 ? 'assistants' : 'agents');
+    const rawList = payload?.[ctx.agentsV1 ? 'assistants' : 'agents'] || payload?.data || payload?.items || payload;
+    const agents = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
     sendJson(res, 200, {
       agents,
       total: agents.length,
@@ -91,11 +92,10 @@ function buildRequestContext(url) {
     e.code = 'USAGE';
     throw e;
   }
-  const limit = parseNumber(url.searchParams.get('limit'));
   const ctx = {
     project,
     apiVersion: url.searchParams.get('apiVersion') || undefined,
-    limit: limit ?? undefined,
+    limit: url.searchParams.get('limit') || undefined,
     order: url.searchParams.get('order') || undefined,
     after: url.searchParams.get('after') || undefined,
     before: url.searchParams.get('before') || undefined,
@@ -123,42 +123,7 @@ function buildLegacyQuery(ctx) {
   return query;
 }
 
-function normalizeAgents(payload, key) {
-  const rawList = payload?.[key] || payload?.assistants || payload?.data || payload?.items || payload;
-  const rows = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
-  return rows.map(agent => normalizeAgentRow(agent));
-}
 
-function normalizeAgentRow(agent) {
-  if (!agent) return { id: '', name: '', model: '', created: '' };
-  const latest = agent?.versions?.latest || null;
-  const model = latest?.definition?.model
-    || latest?.definition?.deployment
-    || agent?.model
-    || '';
-  const createdEpoch = latest?.created_at || agent?.created_at || agent?.createdAt || null;
-  // Return the full agent object plus the normalized fields for backwards compatibility
-  return {
-    ...agent,
-    id: agent?.id || '',
-    name: agent?.name || '',
-    model,
-    created: createdEpoch ? epochToIso(createdEpoch) : '',
-  };
-}
-
-function epochToIso(value) {
-  const numeric = typeof value === 'string' ? Number(value) : value;
-  if (!numeric || Number.isNaN(numeric)) return '';
-  const seconds = numeric > 10_000_000_000 ? Math.floor(numeric / 1000) : numeric;
-  return new Date(seconds * 1000).toISOString();
-}
-
-function parseNumber(value) {
-  if (!value) return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
 
 async function serveStaticAsset(pathname, res) {
   const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
@@ -198,7 +163,8 @@ async function handleConversationsRequest(url, res) {
     if (ctx.before) query.before = ctx.before;
     
     const payload = await apiRequest(ctx, 'openai/conversations', { query });
-    const conversations = normalizeConversations(payload);
+    const rawList = payload?.conversations || payload?.data || payload?.items || payload;
+    const conversations = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
     sendJson(res, 200, {
       conversations,
       total: conversations.length,
@@ -214,21 +180,7 @@ async function handleConversationsRequest(url, res) {
   }
 }
 
-function normalizeConversations(payload) {
-  const rawList = payload?.conversations || payload?.data || payload?.items || payload;
-  const rows = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
-  return rows.map(conv => normalizeConversationRow(conv));
-}
 
-function normalizeConversationRow(conv) {
-  if (!conv) return { id: '', created: '', object: '' };
-  const createdEpoch = conv?.created_at || conv?.createdAt || null;
-  return {
-    id: conv?.id || '',
-    created: createdEpoch ? epochToIso(createdEpoch) : '',
-    object: conv?.object || 'conversation',
-  };
-}
 
 async function handleConversationItemsRequest(url, res) {
   try {
@@ -281,7 +233,8 @@ async function handleResponsesRequest(url, res) {
     if (ctx.before) query.before = ctx.before;
     
     const payload = await apiRequest(ctx, 'openai/responses', { query });
-    const responses = normalizeResponses(payload);
+    const rawList = payload?.responses || payload?.data || payload?.items || payload;
+    const responses = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
     sendJson(res, 200, {
       responses,
       total: responses.length,
@@ -297,11 +250,7 @@ async function handleResponsesRequest(url, res) {
   }
 }
 
-function normalizeResponses(payload) {
-  const rawList = payload?.responses || payload?.data || payload?.items || payload;
-  const rows = Array.isArray(rawList) ? rawList : rawList ? [rawList] : [];
-  return rows;
-}
+
 
 async function handleResponseDetailsRequest(url, res) {
   try {
