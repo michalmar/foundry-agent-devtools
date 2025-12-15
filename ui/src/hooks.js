@@ -3,7 +3,7 @@ import { parseErrorResponse } from './utils'
 
 export function useAgents(config) {
   const [agents, setAgents] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(() => Boolean(config?.project))
   const [error, setError] = useState(null)
   const [fetchedAt, setFetchedAt] = useState(null)
 
@@ -36,9 +36,15 @@ export function useAgents(config) {
   }
 
   useEffect(() => {
-    if (config.project) {
-      fetchAgents()
+    if (!config.project) {
+      setAgents([])
+      setLoading(false)
+      setError(null)
+      setFetchedAt(null)
+      return
     }
+
+    fetchAgents()
   }, [config.project, config.limit, config.order, config.mode])
 
   return { agents, loading, error, fetchedAt, refresh: fetchAgents }

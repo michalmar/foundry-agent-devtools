@@ -145,6 +145,7 @@ function App() {
               </div>
               <AgentsTable 
                 agents={agentsData.agents} 
+                loading={agentsData.loading}
                 selectedAgent={selectedAgent}
                 onSelectAgent={setSelectedAgent}
               />
