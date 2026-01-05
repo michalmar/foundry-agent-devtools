@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAgents, useConversations, useConversationDetails, useConversationMutations, useResponses, useResponseDetails, useResponseMutations } from './hooks'
+import { useAgents, useAgentMutations, useConversations, useConversationDetails, useConversationMutations, useResponses, useResponseDetails, useResponseMutations } from './hooks'
 import { AgentsTable, AgentDetail } from './components/Agents'
 import { ConversationsTable, ConversationDetail } from './components/Conversations'
 import { ResponsesTable, ResponseDetail } from './components/Responses'
@@ -85,6 +85,10 @@ function App() {
   const conversationsConfig = { ...config, limit: conversationsLimit, idQuery: conversationsIdQuery }
   const responsesConfig = { ...config, limit: responsesLimit, idQuery: responsesIdQuery }
   const agentsData = useAgents(config)
+  const agentMutations = useAgentMutations(config, () => {
+    agentsData.refresh()
+    setSelectedAgent(null)
+  })
   const conversationsData = useConversations(conversationsConfig)
   const conversationDetailsData = useConversationDetails(config, selectedConversation?.id)
   const conversationMutations = useConversationMutations(config, () => {
@@ -148,6 +152,12 @@ function App() {
                 loading={agentsData.loading}
                 selectedAgent={selectedAgent}
                 onSelectAgent={setSelectedAgent}
+                onDeleteAgent={agentMutations.deleteAgent}
+                onBulkDeleteAgents={agentMutations.bulkDeleteAgents}
+                mutationLoading={agentMutations.loading}
+                mutationError={agentMutations.error}
+                onClearError={agentMutations.clearError}
+                loadError={agentsData.error}
               />
             </section>
 

@@ -50,6 +50,79 @@ export function useAgents(config) {
   return { agents, loading, error, fetchedAt, refresh: fetchAgents }
 }
 
+export function useAgentMutations(config, onSuccess) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const deleteAgent = async (agentId) => {
+    const { project } = config
+    if (!project || !agentId) return false
+
+    const params = new URLSearchParams({ project })
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/agents/${agentId}?${params}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        await parseErrorResponse(response, 'Failed to delete agent')
+      }
+      onSuccess?.()
+      return true
+    } catch (err) {
+      setError(err.message)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const bulkDeleteAgents = async (agentIds) => {
+    const { project } = config
+    if (!project || !agentIds?.length) return { success: [], failed: [] }
+
+    const params = new URLSearchParams({ project })
+
+    setLoading(true)
+    setError(null)
+
+    const results = { success: [], failed: [] }
+
+    for (const id of agentIds) {
+      try {
+        const response = await fetch(`/api/agents/${id}?${params}`, {
+          method: 'DELETE'
+        })
+        if (response.ok) {
+          results.success.push(id)
+        } else {
+          results.failed.push(id)
+        }
+      } catch {
+        results.failed.push(id)
+      }
+    }
+
+    if (results.failed.length > 0) {
+      setError(`Failed to delete ${results.failed.length} agent(s)`)
+    }
+
+    if (results.success.length > 0) {
+      onSuccess?.()
+    }
+
+    setLoading(false)
+    return results
+  }
+
+  const clearError = () => setError(null)
+
+  return { deleteAgent, bulkDeleteAgents, loading, error, clearError }
+}
+
 export function useConversations(config) {
   const [conversations, setConversations] = useState([])
   const [loading, setLoading] = useState(false)

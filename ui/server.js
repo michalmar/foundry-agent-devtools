@@ -26,6 +26,11 @@ const server = createServer(async (req, res) => {
       await handleAgentsRequest(requestUrl, res);
       return;
     }
+    // Handle DELETE /api/agents/{id}
+    if (requestUrl.pathname.startsWith('/api/agents/') && req.method === 'DELETE') {
+      await handleDeleteAgentRequest(requestUrl, res);
+      return;
+    }
     if (requestUrl.pathname === '/api/conversations/search') {
       await handleConversationsSearchRequest(requestUrl, res);
       return;
@@ -95,6 +100,35 @@ async function handleAgentsRequest(url, res) {
     }
     const status = err.status && Number.isInteger(err.status) ? err.status : 500;
     sendJson(res, status, { error: err.message || 'Failed to load agents' });
+  }
+}
+
+async function handleDeleteAgentRequest(url, res) {
+  try {
+    const ctx = buildRequestContext(url);
+    // Extract agent ID from path like /api/agents/{id}
+    const match = url.pathname.match(/\/api\/agents\/([^/]+)$/);
+    if (!match || !match[1]) {
+      sendJson(res, 400, { error: 'Invalid agent ID' });
+      return;
+    }
+    const agentId = match[1];
+    
+    const endpoint = ctx.agentsV1 ? `assistants/${agentId}` : `agents/${agentId}`;
+    const query = ctx.agentsV1 ? {} : { 'api-version': V2_AGENT_API_VERSION };
+    
+    await apiRequest(ctx, endpoint, { 
+      query, 
+      method: 'DELETE' 
+    });
+    sendJson(res, 200, { deleted: true, id: agentId });
+  } catch (err) {
+    if (err.code === 'USAGE') {
+      sendJson(res, 400, { error: err.message });
+      return;
+    }
+    const status = err.status && Number.isInteger(err.status) ? err.status : 500;
+    sendJson(res, status, { error: err.message || 'Failed to delete agent' });
   }
 }
 

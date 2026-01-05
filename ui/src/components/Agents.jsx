@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatDate } from '../utils'
 
 function getAgentTools(agent) {
@@ -7,70 +7,284 @@ function getAgentTools(agent) {
   return tools.map(tool => tool.type).join(', ')
 }
 
-export function AgentsTable({ agents, loading, selectedAgent, onSelectAgent }) {
+export function AgentsTable({ 
+  agents, 
+  loading, 
+  selectedAgent, 
+  onSelectAgent,
+  onDeleteAgent,
+  onBulkDeleteAgents,
+  mutationLoading,
+  mutationError,
+  onClearError,
+  loadError
+}) {
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+
+  // Clear selection when agents change
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [agents])
+
+  const handleDeleteClick = (e, agent) => {
+    e.stopPropagation()
+    setDeleteConfirmId(agent.id)
+  }
+
+  const handleConfirmDelete = async (e) => {
+    e.stopPropagation()
+    if (deleteConfirmId) {
+      await onDeleteAgent(deleteConfirmId)
+      setDeleteConfirmId(null)
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        next.delete(deleteConfirmId)
+        return next
+      })
+    }
+  }
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation()
+    setDeleteConfirmId(null)
+  }
+
+  const handleCheckboxChange = (e, agentId) => {
+    e.stopPropagation()
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(agentId)) {
+        next.delete(agentId)
+      } else {
+        next.add(agentId)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(new Set(agents.map(a => a.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const handleBulkDeleteClick = () => {
+    setBulkDeleteConfirm(true)
+  }
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.size > 0) {
+      await onBulkDeleteAgents(Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setBulkDeleteConfirm(false)
+    }
+  }
+
+  const handleCancelBulkDelete = () => {
+    setBulkDeleteConfirm(false)
+  }
+
+  const allSelected = agents.length > 0 && 
+    agents.every(a => selectedIds.has(a.id))
+  const someSelected = selectedIds.size > 0
+
   if (agents.length === 0) {
     const isLoading = Boolean(loading)
     return (
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Model</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tools</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan="4" className="px-4 py-8 text-center text-gray-600">
-                <div className="inline-flex items-center gap-2" role="status" aria-live="polite">
-                  {isLoading && (
-                    <span
-                      className="inline-block h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-700 animate-spin"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span>{isLoading ? 'Agents loading…' : 'No agents loaded yet.'}</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {/* Error displays */}
+        {(mutationError || loadError) && (
+          <div className="flex items-center justify-end gap-3">
+            {mutationError && (
+              <div className="flex items-center gap-2 text-red-600 text-sm">
+                <span>⚠️ {mutationError}</span>
+                <button onClick={onClearError} className="text-red-400 hover:text-red-600">✕</button>
+              </div>
+            )}
+            {loadError && (
+              <div className="flex items-center gap-2 text-red-600 text-sm">
+                <span>⚠️ {loadError}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="w-10 px-4 py-3"></th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Model</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tools</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan="6" className="px-4 py-8 text-center text-gray-600">
+                  <div className="inline-flex items-center gap-2" role="status" aria-live="polite">
+                    {isLoading && (
+                      <span
+                        className="inline-block h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-700 animate-spin"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span>{isLoading ? 'Agents loading…' : 'No agents loaded yet.'}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Model</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tools</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {agents.slice(0, 20).map(agent => (
-            <tr 
-              key={agent.id} 
-              onClick={() => onSelectAgent(agent)}
-              className={`cursor-pointer transition-colors ${
-                selectedAgent?.id === agent.id 
-                  ? 'bg-blue-50 hover:bg-blue-100' 
-                  : 'hover:bg-gray-200'
-              }`}
+    <div className="space-y-3">
+      {/* Action Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {someSelected && (
+            <button
+              onClick={handleBulkDeleteClick}
+              disabled={mutationLoading}
+              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg transition-colors flex items-center gap-2"
             >
-              <td className="px-4 py-3 text-sm text-gray-900">{agent.name || 'Unnamed agent'}</td>
-              <td className="px-4 py-3 text-sm text-gray-700">{agent.versions?.latest?.definition?.model || '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-700">{getAgentTools(agent)}</td>
-              <td className="px-4 py-3 text-sm text-gray-700">{formatDate(agent.versions?.latest?.created_at * 1000)}</td>
+              🗑️ Delete Selected ({selectedIds.size})
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {mutationError && (
+            <div className="flex items-center gap-2 text-red-600 text-sm">
+              <span>⚠️ {mutationError}</span>
+              <button onClick={onClearError} className="text-red-400 hover:text-red-600">✕</button>
+            </div>
+          )}
+          {loadError && (
+            <div className="flex items-center gap-2 text-red-600 text-sm">
+              <span>⚠️ {loadError}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      {bulkDeleteConfirm && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <span className="text-red-700 text-sm">
+            Delete {selectedIds.size} agent{selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCancelBulkDelete}
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmBulkDelete}
+              disabled={mutationLoading}
+              className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md transition-colors"
+            >
+              {mutationLoading ? 'Deleting...' : `Delete ${selectedIds.size}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Single Delete Confirmation Dialog */}
+      {deleteConfirmId && !bulkDeleteConfirm && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <span className="text-red-700 text-sm">
+            Delete agent <span className="font-mono">{agents.find(a => a.id === deleteConfirmId)?.name || deleteConfirmId.slice(0, 20) + '...'}</span>?
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCancelDelete}
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              disabled={mutationLoading}
+              className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md transition-colors"
+            >
+              {mutationLoading ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Model</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tools</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {agents.slice(0, 20).map(agent => (
+              <tr 
+                key={agent.id} 
+                onClick={() => onSelectAgent(agent)}
+                className={`cursor-pointer transition-colors ${
+                  selectedAgent?.id === agent.id 
+                    ? 'bg-blue-50 hover:bg-blue-100' 
+                    : selectedIds.has(agent.id)
+                      ? 'bg-orange-50 hover:bg-orange-100'
+                      : 'hover:bg-gray-50'
+                }`}
+              >
+                <td className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(agent.id)}
+                    onChange={(e) => handleCheckboxChange(e, agent.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-900">{agent.name || 'Unnamed agent'}</td>
+                <td className="px-4 py-3 text-sm text-gray-700">{agent.versions?.latest?.definition?.model || '—'}</td>
+                <td className="px-4 py-3 text-sm text-gray-700">{getAgentTools(agent)}</td>
+                <td className="px-4 py-3 text-sm text-gray-700">{formatDate(agent.versions?.latest?.created_at * 1000)}</td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={(e) => handleDeleteClick(e, agent)}
+                    className="px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                    title="Delete agent"
+                  >
+                    🗑️ Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
